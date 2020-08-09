@@ -45,8 +45,8 @@ let employeeQuestions = [
 var con = mysql.createConnection({
   host: "localhost",
   port: 3306,
-  user: "root",
-  password: "Ukrayina91",
+  user: "YOUR USER ID",
+  password: "YOUR PASSWORD",
   database: "employee_tracker_db",
   multipleStatements: true
 });
@@ -114,15 +114,12 @@ function start() {
       }
       if (answer.action == "Delete department") {
         deleteDepartments();
-        start();
       }
       if (answer.action == "Delete role") {
         deleteRole();
-        start();
       }
       if (answer.action == "Delete employee") {
         deletedEmployee();
-        start();
       }
       if (answer.action == "Exit") {
         process.exit();
