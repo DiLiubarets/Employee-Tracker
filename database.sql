@@ -40,5 +40,3 @@ INSERT INTO employee (role_id, first_name, last_name) VALUES (4, "Mira", "L");
 INSERT INTO employee (role_id, first_name, last_name) VALUES (1, "Victor", "P");
 
 
-CREATE TABLE sumSalary ( SELECT employee.first_name, role.salary FROM employee INNER JOIN role ON employee.role_id = role.id INNER JOIN department ON department.id = role.department_id AND department.name = "web"); SELECT SUM(salary) total FROM sumSalary; DROP TABLE sumSalary;
-
