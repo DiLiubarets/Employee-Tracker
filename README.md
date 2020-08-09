@@ -1,13 +1,10 @@
 # Employee Tracker
 
- solution for managing a company's employees using node, inquirer, and MySQL.
-
-
 Design the following database schema containing three tables:
 
 ![Database Schema](Assets/schema.png)
 ![Employee Tracker](Assets/employee-tracker.gif)
-![Youtube video]()
+[Youtube video]()
 
 * **department**:
 
@@ -46,7 +43,7 @@ Command-line application that allows you to:
   * View the total utilized budget of a department -- ie the combined salaries of all employees in that department
 
 
-NPM packages
+NPM packages:
 
 *  [MySQL](https://www.npmjs.com/package/mysql) NPM package to connect to your MySQL database and perform queries.
 

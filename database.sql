@@ -8,7 +8,7 @@ CREATE TABLE department (
   name VARCHAR(30)
 );
 CREATE TABLE role (
-  id INT PRIMARY KEY  AUTO_INCREMENT,
+  id INT PRIMARY KEY AUTO_INCREMENT,
   title VARCHAR(30),
   salary DECIMAL,
   department_id INT
@@ -20,3 +20,25 @@ id INT PRIMARY KEY AUTO_INCREMENT,
  role_id INT,
  manager_id INT NULL
 );
+
+INSERT INTO department (name)
+VALUES ("web");
+INSERT INTO department (name)
+VALUES ("sales");
+
+INSERT INTO role (title, salary, department_id) VALUES ("front_end", 1000, 1);
+INSERT INTO role (title, salary, department_id) VALUES ("back_end", 2000, 1);
+
+INSERT INTO role (title, salary, department_id) VALUES ("rep", 1000, 2);
+INSERT INTO role (title, salary, department_id) VALUES ("manager", 2000, 2);
+
+
+INSERT INTO employee (role_id, first_name, last_name) VALUES (1, "Alex", "P");
+INSERT INTO employee (role_id, first_name, last_name) VALUES (2, "Dina", "L");
+INSERT INTO employee (role_id, first_name, last_name) VALUES (3, "Nika", "L");
+INSERT INTO employee (role_id, first_name, last_name) VALUES (4, "Mira", "L");
+INSERT INTO employee (role_id, first_name, last_name) VALUES (1, "Victor", "P");
+
+
+CREATE TABLE sumSalary ( SELECT employee.first_name, role.salary FROM employee INNER JOIN role ON employee.role_id = role.id INNER JOIN department ON department.id = role.department_id AND department.name = "web"); SELECT SUM(salary) total FROM sumSalary; DROP TABLE sumSalary;
+

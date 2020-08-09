@@ -9,6 +9,7 @@ let options = [
   "View roles",
   "View employees",
   "View employees by manager",
+  "View the total utilized budget of a department",
   "Update roles",
   "Update employee manager",
   "Delete department",
@@ -47,6 +48,7 @@ var con = mysql.createConnection({
   user: "root",
   password: "Ukrayina91",
   database: "employee_tracker_db",
+  multipleStatements: true
 });
 con.connect((err) => {
   if (err) {
@@ -99,7 +101,10 @@ function start() {
         });
       }
       if (answer.action == "View employees by manager") {
-        viewByManager()
+        viewByManager();
+      }
+      if (answer.action == "View the total utilized budget of a department") {
+        totalBudget();
       }
       if (answer.action == "Update roles") {
         updateEmpRole();
@@ -108,16 +113,19 @@ function start() {
         updateEmpManager();
       }
       if (answer.action == "Delete department") {
+        deleteDepartments();
         start();
       }
       if (answer.action == "Delete role") {
+        deleteRole();
         start();
       }
       if (answer.action == "Delete employee") {
+        deletedEmployee();
         start();
       }
       if (answer.action == "Exit") {
-        start();
+        process.exit();
       }
     });
 }
@@ -136,7 +144,6 @@ const addDepartment = () => {
 
         con.query(sql, (err, row) => {
           if (err) throw err;
-          console.table(row);
           start();
         });
       }
@@ -144,13 +151,17 @@ const addDepartment = () => {
 };
 
 const addRole = () => {
-  let departments = [];
+  let departments = {
+    name: [],
+    id: [],
+  };
 
   let sql = "SELECT * FROM department;";
   con.query(sql, (err, row) => {
     if (err) throw err;
     for (dep of row) {
-      departments.push(dep.name);
+      departments.name.push(dep.name);
+      departments.id.push(dep.id);
     }
   });
 
@@ -163,14 +174,14 @@ const addRole = () => {
         name: "department",
         type: "list",
         message: "Select department",
-        choices: departments,
+        choices: departments.name,
       })
       .then((input) => {
-        let id = departments.indexOf(input.department) + 1;
+        let index = departments.name.indexOf(input.department);
+        let id = departments.id[index];
         let sql = `INSERT INTO role (department_id, title, salary) VALUES ("${id}", "${title}", "${salary}");`;
         con.query(sql, (err, row) => {
           if (err) throw err;
-          console.table(row)
           console.log("Role added");
           start();
         });
@@ -179,23 +190,32 @@ const addRole = () => {
 };
 
 const addEmployee = () => {
-  let roles = [];
+  let roles = {
+    id: [],
+    title: [],
+  };
   let sql = "SELECT * FROM role;";
   con.query(sql, (err, row) => {
     if (err) throw err;
     for (rol of row) {
-      roles.push(rol.title);
+      roles.id.push(rol.id);
+      roles.title.push(rol.title);
     }
   });
 
-  let employees = [];
+  let employees = {
+    id: [],
+    name: [],
+  };
   let sql2 = "SELECT * FROM employee";
   con.query(sql2, (err, row) => {
     if (err) throw err;
     for (emp of row) {
-      employees.push(emp.first_name);
+      employees.name.push(emp.first_name + " " + emp.last_name);
+      employees.id.push(emp.id);
     }
-    employees.push("None");
+    employees.name.push("None");
+    employees.id.push(0);
   });
 
   inquirer.prompt(employeeQuestions).then((answer) => {
@@ -207,21 +227,23 @@ const addEmployee = () => {
         name: "role",
         type: "list",
         message: "Select role",
-        choices: roles,
+        choices: roles.title,
       })
       .then((input) => {
-        let role_id = roles.indexOf(input.role) + 1;
+        let index = roles.title.indexOf(input.role);
+        let role_id = roles.id[index];
         inquirer
           .prompt({
             name: "manager",
             type: "list",
             message: "Select manager",
-            choices: employees,
+            choices: employees.name,
           })
           .then((input) => {
-            let manager_id = employees.indexOf(input.manager) + 1;
+            let index = employees.name.indexOf(input.manager);
+            let manager_id = employees.id[index];
             let sql = `INSERT INTO employee (role_id, first_name, last_name, manager_id) VALUES ("${role_id}", "${firstName}", "${lastName}", "${manager_id}");`;
-            if (manager_id == employees.length) {
+            if (index === employees.name.length - 1) {
               sql = `INSERT INTO employee (role_id, first_name, last_name) VALUES ("${role_id}", "${firstName}", "${lastName}");`;
             }
             con.query(sql, (err, row) => {
@@ -235,21 +257,29 @@ const addEmployee = () => {
 };
 
 const updateEmpRole = () => {
-  let roles = [];
+  let roles = {
+    id: [],
+    title: [],
+  };
   let sql2 = "SELECT * FROM role;";
   con.query(sql2, (err, row) => {
     if (err) throw err;
     for (rol of row) {
-      roles.push(rol.title);
+      roles.id.push(rol.id);
+      roles.title.push(rol.title);
     }
   });
 
-  let employeeNames = [];
+  let employeeNames = {
+    id: [],
+    name: [],
+  };
   let sql = "SELECT * FROM employee";
   con.query(sql, (err, row) => {
     if (err) throw err;
     for (emp of row) {
-      employeeNames.push(emp.first_name + " " + emp.last_name);
+      employeeNames.name.push(emp.first_name + " " + emp.last_name);
+      employeeNames.id.push(emp.id);
     }
 
     inquirer
@@ -257,19 +287,21 @@ const updateEmpRole = () => {
         name: "name",
         type: "list",
         message: "Select employee",
-        choices: employeeNames,
+        choices: employeeNames.name,
       })
       .then((input) => {
-        let id = employeeNames.indexOf(input.name) + 1;
+        let index = employeeNames.name.indexOf(input.name);
+        let id = employeeNames.id[index];
         inquirer
           .prompt({
             name: "role",
             type: "list",
             message: "Select role",
-            choices: roles,
+            choices: roles.title,
           })
           .then((input) => {
-            let role_id = roles.indexOf(input.role) + 1;
+            let index = roles.title.indexOf(input.role);
+            let role_id = roles.id[index];
             let sql = `UPDATE employee SET role_id=${role_id} WHERE id=${id};`;
 
             con.query(sql, (err, row) => {
@@ -283,12 +315,16 @@ const updateEmpRole = () => {
 };
 
 const updateEmpManager = () => {
-  let employee = [];
+  let employee = {
+    id: [],
+    name: [],
+  };
   let sql = "SELECT * FROM employee";
   con.query(sql, (err, row) => {
     if (err) throw err;
     for (emp of row) {
-      employee.push(emp.first_name + " " + emp.last_name);
+      employee.name.push(emp.first_name + " " + emp.last_name);
+      employee.id.push(emp.id);
     }
 
     inquirer
@@ -296,19 +332,21 @@ const updateEmpManager = () => {
         name: "name",
         type: "list",
         message: "Select employee",
-        choices: employee,
+        choices: employee.name,
       })
       .then((input) => {
-        let id = employee.indexOf(input.name) + 1;
+        let index = employee.indexOf(input.name);
+        let id = employee.id[index];
         inquirer
           .prompt({
             name: "manager",
             type: "list",
             message: "Select manager",
-            choices: employee,
+            choices: employee.name,
           })
           .then((input) => {
-            let emp_id = employee.indexOf(input.manager) + 1;
+            let index = employee.indexOf(input.name);
+            let emp_id = employee.id[index];
             let sql = `UPDATE employee SET manager_id=${emp_id} WHERE id=${id};`;
             con.query(sql, (err, row) => {
               if (err) throw err;
@@ -321,28 +359,148 @@ const updateEmpManager = () => {
 };
 
 const viewByManager = () => {
-    let employee = [];
+  let employee = {
+    id: [],
+    name: [],
+  };
   let sql = "SELECT * FROM employee";
   con.query(sql, (err, row) => {
     if (err) throw err;
     for (emp of row) {
-      employee.push(emp.first_name + " " + emp.last_name);
+      employees.name.push(emp.first_name + " " + emp.last_name);
+      employees.id.push(emp.id);
     }
-
     inquirer
-    .prompt({
-      name: "name",
-      type: "list",
-      message: "Select employee",
-      choices: employee,
-    }).then((input)=>{
-        let man_id = employee.indexOf(input.name) +1
-      let sql2 = `SELECT * FROM employee WHERE manager_id="${man_id}"`;
-      con.query(sql2, (err, row) => {
-        if (err) throw err;
-        console.table(row)
-        start();
+      .prompt({
+        name: "name",
+        type: "list",
+        message: "Select employee",
+        choices: employee.name,
+      })
+      .then((input) => {
+        let index = employee.name.indexOf(input.name);
+        let man_id = employee.id[index];
+        let sql2 = `SELECT * FROM employee WHERE manager_id="${man_id}"`;
+        con.query(sql2, (err, row) => {
+          if (err) throw err;
+          console.table(row);
+          start();
+        });
       });
-    })
-})
-}
+  });
+};
+
+const deleteDepartments = () => {
+  let departments = [];
+  let sql = "SELECT * FROM department;";
+  con.query(sql, (err, row) => {
+    if (err) throw err;
+    for (dep of row) {
+      departments.push(dep.name);
+    }
+    inquirer
+      .prompt({
+        name: "department",
+        type: "list",
+        message: "Select department to delete",
+        choices: departments,
+      })
+      .then((input) => {
+        let sql = `DELETE FROM department WHERE name="${input.department}"`;
+        con.query(sql, (err, row) => {
+          if (err) throw err;
+          console.log("Department deleted");
+          start();
+        });
+      });
+  });
+};
+const deleteRole = () => {
+  let roles = {
+    id: [],
+    title: [],
+  };
+  let sql = "SELECT * FROM role;";
+  con.query(sql, (err, row) => {
+    if (err) throw err;
+    for (rol of row) {
+      roles.id.push(rol.id);
+      roles.title.push(rol.title);
+    }
+    inquirer
+      .prompt({
+        name: "role",
+        type: "list",
+        message: "Select role",
+        choices: roles.title,
+      })
+      .then((input) => {
+        let index = roles.title.indexOf(input.role);
+        let role_id = roles.id[index];
+        let sql = `DELETE FROM role WHERE id="${role_id}"`;
+        con.query(sql, (err, row) => {
+          if (err) throw err;
+          console.log("Role deleted");
+          start();
+        });
+      });
+  });
+};
+
+const deletedEmployee = () => {
+  let employees = {
+    id: [],
+    name: [],
+  };
+  let sql = "SELECT * FROM employee";
+  con.query(sql, (err, row) => {
+    if (err) throw err;
+    for (emp of row) {
+      employees.name.push(emp.first_name + " " + emp.last_name);
+      employees.id.push(emp.id);
+    }
+    inquirer
+      .prompt({
+        name: "name",
+        type: "list",
+        message: "Select employee",
+        choices: employees.name,
+      })
+      .then((input) => {
+        let index = employees.name.indexOf(input.name);
+        let id = employees.id[index];
+        let sql = `DELETE FROM employee WHERE id=${id}`;
+        con.query(sql, (err) => {
+          if (err) throw err;
+          console.log("Employee deleted");
+          start();
+        });
+      });
+  });
+};
+
+const totalBudget = () => {
+  let departments = [];
+  let sql = "SELECT * FROM department;";
+  con.query(sql, (err, row) => {
+    if (err) throw err;
+    for (dep of row) {
+      departments.push(dep.name);
+    }
+    inquirer
+      .prompt({
+        name: "department",
+        type: "list",
+        message: "Select department to view budget",
+        choices: departments,
+      })
+      .then((input) => {
+        let sql = `CREATE TABLE sumSalary ( SELECT employee.first_name, role.salary FROM employee INNER JOIN role ON employee.role_id = role.id INNER JOIN department ON department.id = role.department_id AND department.name = "${input.department}"); SELECT SUM(salary) total FROM sumSalary; DROP TABLE sumSalary;`;
+        con.query(sql, (err, row) => {
+          if (err) throw err;
+          console.table(row[1])
+          start();
+        });
+      });
+  });
+};
